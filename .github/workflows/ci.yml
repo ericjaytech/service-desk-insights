@@ -13,8 +13,8 @@ jobs:
       matrix:
         python-version: ["3.11", "3.14"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install -e ".[dev]"
@@ -25,8 +25,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
       - run: pip install build
@@ -39,6 +39,15 @@ jobs:
             --rows 100 --seed 42 \
             --start-date 2026-01-05 --weeks 4 \
             --output /tmp/ci-synthetic.csv
+      - run: |
+          service-desk-insights analyse /tmp/ci-synthetic.csv \
+            --sla-policy examples/sla-policy.json \
+            --as-of 2026-08-30T12:00:00Z \
+            --output-dir /tmp/ci-dry-run-report \
+            --history-db /tmp/ci-dry-run-history.sqlite \
+            --dry-run
+          test ! -e /tmp/ci-dry-run-report
+          test ! -e /tmp/ci-dry-run-history.sqlite
       - run: |
           service-desk-insights analyse /tmp/ci-synthetic.csv \
             --sla-policy examples/sla-policy.json \
