@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e ".[dev]"
+      - run: python -m ruff format --check .
+      - run: python -m ruff check .
+      - run: python -m pytest
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install build
+      - run: python -m build
+      - run: pip install dist/*.whl
+      - run: pip check
+      - run: service-desk-insights --version
+      - run: |
+          service-desk-insights generate-synthetic \
+            --rows 100 --seed 42 \
+            --start-date 2026-01-05 --weeks 4 \
+            --output /tmp/ci-synthetic.csv
+      - run: |
+          service-desk-insights analyse /tmp/ci-synthetic.csv \
+            --sla-policy examples/sla-policy.json \
+            --as-of 2026-08-30T12:00:00Z \
+            --output-dir /tmp/ci-report \
+            --history-db /tmp/ci-history.sqlite

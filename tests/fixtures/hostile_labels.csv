@@ -1,0 +1,9 @@
+ticket_id,created_at,first_response_at,resolved_at,status,priority,category,reopen_count
+H-001,2026-08-01T10:00:00Z,2026-08-01T11:00:00Z,2026-08-02T10:00:00Z,resolved,P1,=cmd|'calc'!A1,0
+H-002,2026-08-02T10:00:00Z,2026-08-02T11:00:00Z,,open,P2,+SUM(A1:A10),0
+H-003,2026-08-03T10:00:00Z,2026-08-03T11:00:00Z,2026-08-04T10:00:00Z,resolved,P3,-DDE,0
+H-004,2026-08-04T10:00:00Z,2026-08-04T11:00:00Z,,open,P4,@SUM,0
+H-005,2026-08-05T10:00:00Z,2026-08-05T11:00:00Z,2026-08-06T10:00:00Z,resolved,P1,<script>alert(1)</script>,0
+H-006,2026-08-06T10:00:00Z,2026-08-06T11:00:00Z,,open,P2,../../etc/passwd,0
+H-007,2026-08-07T10:00:00Z,2026-08-07T11:00:00Z,2026-08-08T10:00:00Z,resolved,P3,'; DROP TABLE runs;--,0
+H-008,2026-08-08T10:00:00Z,2026-08-08T11:00:00Z,,open,P4,<img src=x onerror=alert(1)>,0

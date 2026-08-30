@@ -1,0 +1,6 @@
+ticket_id,created_at,first_response_at,resolved_at,status,priority,category,reopen_count
+T-001,2026-08-01T10:00:00Z,2026-08-01T10:30:00Z,2026-08-02T14:00:00Z,resolved,P2,network,0
+T-002,2026-08-05T08:00:00Z,2026-08-05T08:45:00Z,,open,P1,server-down,0
+T-003,2026-08-10T09:00:00Z,2026-08-10T09:15:00Z,2026-08-10T16:00:00Z,closed,P3,email,1
+T-004,2026-08-15T12:00:00Z,,,open,P4,printer,0
+T-005,2026-08-20T14:00:00Z,2026-08-20T15:00:00Z,2026-08-25T10:00:00Z,resolved,P2,network,2

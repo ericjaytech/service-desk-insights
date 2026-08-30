@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Service Desk Insights — {{ input_basename }}</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:#1a1a1a;background:#fafafa;line-height:1.5;padding:2rem;max-width:960px;margin:0 auto}
+  h1{font-size:1.5rem;margin-bottom:.25rem}
+  h2{font-size:1.15rem;margin:1.5rem 0 .5rem;padding-bottom:.25rem;border-bottom:2px solid #ddd}
+  .provenance{font-size:.85rem;color:#555;margin-bottom:1.5rem}
+  .provenance dt{font-weight:600;display:inline}
+  .provenance dd{display:inline;margin-right:1.5rem}
+  table{width:100%;border-collapse:collapse;margin:.5rem 0 1rem;font-size:.9rem}
+  th,td{padding:.4rem .6rem;text-align:left;border:1px solid #ddd}
+  th{background:#eee;font-weight:600}
+  tr:nth-child(even){background:#f5f5f5}
+  .metric-panels{display:flex;gap:1rem;flex-wrap:wrap;margin:.5rem 0 1rem}
+  .metric-panel{flex:1 1 180px;background:#fff;border:1px solid #ddd;border-radius:4px;padding:.75rem;text-align:center}
+  .metric-panel .value{font-size:1.75rem;font-weight:700;color:#1a1a1a}
+  .metric-panel .label{font-size:.8rem;color:#555;margin-top:.25rem}
+  .bar-wrap{background:#eee;border-radius:3px;height:1rem;min-width:2rem;overflow:hidden}
+  .bar-fill{background:#4a90d9;height:100%;border-radius:3px}
+  .warning{background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:.5rem .75rem;margin:.5rem 0;font-size:.85rem}
+  .footer{font-size:.75rem;color:#999;margin-top:2rem;border-top:1px solid #ddd;padding-top:.5rem}
+  @media print{
+    body{font-size:10pt;padding:1cm}
+    .metric-panel{border:1px solid #000}
+    table{font-size:9pt}
+  }
+</style>
+</head>
+<body>
+
+<h1>Service Desk Insights Report</h1>
+
+<dl class="provenance">
+  <dt>Source:</dt><dd>{{ input_basename }}</dd>
+  <dt>As-of:</dt><dd>{{ as_of }}</dd>
+  <dt>Tickets:</dt><dd>{{ ticket_count }}</dd>
+</dl>
+
+{% if warnings %}
+<div class="warning">
+  {% for w in warnings %}<p>{{ w }}</p>{% endfor %}
+</div>
+{% endif %}
+
+<!-- Summary panels -->
+<div class="metric-panels">
+  {% set open_total = ageing.total_open %}
+  <div class="metric-panel">
+    <div class="value">{{ open_total }}</div>
+    <div class="label">Open Tickets</div>
+  </div>
+  {% if resolution.median_hours is not none %}
+  <div class="metric-panel">
+    <div class="value">{{ "%.1f"|format(resolution.median_hours) }}h</div>
+    <div class="label">Median Resolution (n={{ resolution.sample_size }})</div>
+  </div>
+  {% endif %}
+  <div class="metric-panel">
+    <div class="value">{{ reopened.count }}</div>
+    <div class="label">Reopened ({{ reopened.pct }}%)</div>
+  </div>
+</div>
+
+<!-- SLA -->
+<h2>SLA Performance</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Priority</th>
+      <th>Response Met</th><th>Response Breached</th><th>Response Pending</th>
+      <th>Response %</th>
+      <th>Resolution Met</th><th>Resolution Breached</th><th>Resolution Pending</th>
+      <th>Resolution %</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in sla_by_priority %}
+    <tr>
+      <td>{{ r.priority }}</td>
+      <td>{{ r.response.met }}</td><td>{{ r.response.breached }}</td><td>{{ r.response.pending }}</td>
+      <td>{% if r.response.compliance_pct is not none %}{{ r.response.compliance_pct }}%{% else %}—{% endif %}</td>
+      <td>{{ r.resolution.met }}</td><td>{{ r.resolution.breached }}</td><td>{{ r.resolution.pending }}</td>
+      <td>{% if r.resolution.compliance_pct is not none %}{{ r.resolution.compliance_pct }}%{% else %}—{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- Ageing -->
+<h2>Open Ticket Ageing</h2>
+<p>Oldest open: {{ oldest_age_display }}</p>
+<table>
+  <thead><tr><th>Age</th><th>Count</th><th>%</th><th></th></tr></thead>
+  <tbody>
+    {% for b in ageing.buckets %}
+    <tr>
+      <td>{{ b.label }}</td>
+      <td>{{ b.count }}</td>
+      <td>{{ b.pct }}%</td>
+      <td><div class="bar-wrap"><div class="bar-fill" style="width:{{ b.pct }}%"></div></div></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- Backlog -->
+<h2>Open Backlog</h2>
+
+<h3>By Priority</h3>
+<table>
+  <thead><tr><th>Priority</th><th>Count</th><th>%</th></tr></thead>
+  <tbody>
+    {% for r in backlog.by_priority %}
+    <tr><td>{{ r.key }}</td><td>{{ r.count }}</td><td>{{ r.pct }}%</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h3>By Category</h3>
+<table>
+  <thead><tr><th>Category</th><th>Count</th><th>%</th></tr></thead>
+  <tbody>
+    {% for r in backlog.by_category %}
+    <tr><td>{{ r.key }}</td><td>{{ r.count }}</td><td>{{ r.pct }}%</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- Resolution Times -->
+<h2>Resolution Times</h2>
+{% if resolution.sample_size > 0 %}
+<table>
+  <tr><th>Sample Size</th><td>{{ resolution.sample_size }}</td></tr>
+  <tr><th>Median</th><td>{{ "%.1f"|format(resolution.median_hours) }} hours</td></tr>
+  <tr><th>P90</th><td>{{ "%.1f"|format(resolution.p90_hours) }} hours {% if resolution.small_sample_warning %}(small sample){% endif %}</td></tr>
+</table>
+{% else %}
+<p>No resolved tickets.</p>
+{% endif %}
+
+<!-- Reopened -->
+<h2>Reopened Tickets</h2>
+<table>
+  <tr><th>Count</th><td>{{ reopened.count }}</td></tr>
+  <tr><th>% of All Tickets</th><td>{% if reopened.pct is not none %}{{ reopened.pct }}%{% else %}—{% endif %}</td></tr>
+  <tr><th>Total Reopen Events</th><td>{{ reopened.total_reopen_events }}</td></tr>
+</table>
+
+<!-- Recurring -->
+<h2>Recurring Categories</h2>
+<p>Minimum count: {{ recurring_min_count }}</p>
+{% if recurring %}
+<table>
+  <thead><tr><th>Category</th><th>Count</th><th>Share</th><th>Open</th></tr></thead>
+  <tbody>
+    {% for rc in recurring %}
+    <tr><td>{{ rc.category }}</td><td>{{ rc.count }}</td><td>{{ rc.share_pct }}%</td><td>{{ rc.open_count }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>No categories meet the recurring threshold.</p>
+{% endif %}
+
+<!-- Weekly -->
+<h2>Weekly Trends</h2>
+{% if weekly %}
+<table>
+  <thead><tr><th>Week Starting</th><th>Opened</th><th>Resolved</th><th>Net</th></tr></thead>
+  <tbody>
+    {% for wr in weekly %}
+    <tr><td>{{ wr.week_start }}</td><td>{{ wr.opened }}</td><td>{{ wr.resolved }}</td><td>{{ "%+d"|format(wr.net_change) }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>No weekly data.</p>
+{% endif %}
+
+<div class="footer">
+  Generated by service-desk-insights {{ tool_version }} on {{ as_of }}.
+  Input SHA-256: {{ input_sha256[:16] }}… &middot; Policy SHA-256: {{ policy_sha256[:16] }}…
+</div>
+
+</body>
+</html>

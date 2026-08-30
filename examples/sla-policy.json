@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "clock": "elapsed",
+  "priority_order": ["P1", "P2", "P3", "P4"],
+  "open_statuses": ["open", "pending"],
+  "closed_statuses": ["resolved", "closed"],
+  "targets": {
+    "P1": {"first_response_hours": 1, "resolution_hours": 4},
+    "P2": {"first_response_hours": 4, "resolution_hours": 12},
+    "P3": {"first_response_hours": 8, "resolution_hours": 48},
+    "P4": {"first_response_hours": 24, "resolution_hours": 120}
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "columns": {
+    "ticket_id": "Case Number",
+    "created_at": "Opened UTC",
+    "first_response_at": "First Reply UTC",
+    "resolved_at": "Resolved UTC",
+    "status": "State",
+    "priority": "Urgency",
+    "category": "Issue Type",
+    "reopen_count": "Reopens"
+  }
+}
