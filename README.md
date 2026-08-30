@@ -29,7 +29,10 @@ production service-management system or a substitute for source-system reporting
 Python 3.11 or later and [pipx](https://pipx.pypa.io/) are required.
 
 ```bash
-pipx install "git+https://github.com/ericjaytech/service-desk-insights.git@v0.1.0"
+git clone --branch v0.1.0 --depth 1 \
+  https://github.com/ericjaytech/service-desk-insights.git
+cd service-desk-insights
+pipx install .
 
 service-desk-insights generate-synthetic \
   --rows 300 --seed 42 \
