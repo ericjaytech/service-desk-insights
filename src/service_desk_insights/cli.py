@@ -64,6 +64,11 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Optional path to an aggregate-only SQLite history database.",
     )
     analyse.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Validate input and calculate the terminal summary without writing files.",
+    )
+    analyse.add_argument(
         "--recurring-min-count",
         type=int,
         default=3,
@@ -163,6 +168,11 @@ def _cmd_analyse(args: argparse.Namespace) -> None:
         input_hash=result.input_sha256,
         input_basename=result.source_basename,
     )
+
+    if args.dry_run:
+        terminal_summary(metrics)
+        sys.stdout.write("\nDry run complete. No report or history files were written.\n")
+        return
 
     # --- Output directory (atomic via temp + rename) -----------------------
     output_dir = args.output_dir

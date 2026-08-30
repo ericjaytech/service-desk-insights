@@ -320,8 +320,11 @@ def test_analyse_no_partial_output_on_failure():
     assert not os.path.exists(output_dir + ".tmp")
 
 
-def test_analyse_path_traversal_rejected():
-    """Path traversal in output-dir is rejected by argparse (not a security bypass)."""
+def test_analyse_dry_run_calculates_metrics_without_writing(tmp_path):
+    """Dry-run validates and calculates metrics without publishing output."""
+    output_dir = tmp_path / "report"
+    history_db = tmp_path / "history.sqlite"
+
     cp = _run(
         "analyse",
         "tests/fixtures/canonical_tickets.csv",
@@ -330,10 +333,13 @@ def test_analyse_path_traversal_rejected():
         "--as-of",
         "2026-08-30T12:00:00Z",
         "--output-dir",
-        "../../etc/passwd",
+        str(output_dir),
+        "--history-db",
+        str(history_db),
+        "--dry-run",
     )
-    # argparse doesn't block path traversal, but the directory won't exist
-    # and the tool will try to create it. The key test is that it doesn't
-    # write outside the intended location.
-    # This test just verifies it doesn't crash with a traceback.
-    assert cp.returncode in (1, 3, 4)
+    assert cp.returncode == 0, cp.stderr
+    assert "Dry run complete" in cp.stdout
+    assert "Report written" not in cp.stdout
+    assert not output_dir.exists()
+    assert not history_db.exists()
